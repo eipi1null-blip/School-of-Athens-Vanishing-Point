@@ -1,0 +1,79 @@
+const slider = document.getElementById("zoomSlider");
+const layer = document.getElementById("paintingLayer");
+const viewer = document.getElementById("viewer");
+const zoomReadout = document.getElementById("zoomReadout");
+const stageReadout = document.getElementById("stageReadout");
+const prompt = document.getElementById("prompt");
+const discussion = document.getElementById("discussion");
+const toggleLines = document.getElementById("toggleLines");
+let userHasZoomed = false;
+let manualLinePreference = null;
+
+function stageForZoom(zoom) {
+  if (zoom < 1.7) {
+    return {
+      title: "Full fresco view",
+      prompt: "Start with the whole painting. What architectural lines seem to point toward the center?",
+      discussion: "Why might Raphael use architecture to guide your eye before you even notice the people?"
+    };
+  }
+  if (zoom < 3.6) {
+    return {
+      title: "Perspective lines converge",
+      prompt: "Follow the blue guide lines. Where do they meet?",
+      discussion: "How does one-point perspective create a visual path through the painting?"
+    };
+  }
+  if (zoom < 6.3) {
+    return {
+      title: "Approaching the vanishing point",
+      prompt: "The vanishing point sits at hip level between Plato and Aristotle. Who is Raphael asking us to notice?",
+      discussion: "What is the relationship between mathematical perspective and the painting's philosophical meaning?"
+    };
+  }
+  return {
+    title: "Plato and Aristotle revealed",
+    prompt: "Plato points upward while Aristotle gestures outward. What might those gestures suggest about their philosophies?",
+    discussion: "Plato often represents abstract forms and ideals; Aristotle often represents observation of the physical world. How does Raphael show that contrast visually?"
+  };
+}
+
+function update() {
+  const zoom = Number(slider.value);
+  layer.style.transform = `scale(${zoom})`;
+  zoomReadout.textContent = `${zoom.toFixed(1)}x`;
+
+  const stage = stageForZoom(zoom);
+  stageReadout.textContent = stage.title;
+  prompt.textContent = stage.prompt;
+  discussion.textContent = stage.discussion;
+
+  viewer.classList.toggle("reveal-names", zoom >= 6.3);
+  const shouldShowLines = manualLinePreference ?? userHasZoomed;
+  viewer.classList.toggle("lines-hidden", !shouldShowLines);
+  toggleLines.textContent = shouldShowLines ? "Hide guide lines" : "Show guide lines";
+}
+
+document.querySelectorAll("[data-zoom]").forEach(button => {
+  button.addEventListener("click", () => {
+    userHasZoomed = true;
+    manualLinePreference = null;
+    slider.value = button.dataset.zoom;
+    update();
+  });
+});
+
+toggleLines.addEventListener("click", () => {
+  const currentlyHidden = viewer.classList.contains("lines-hidden");
+  manualLinePreference = currentlyHidden;
+  userHasZoomed = true;
+  update();
+});
+
+slider.addEventListener("input", () => {
+  userHasZoomed = true;
+  manualLinePreference = null;
+  update();
+});
+
+update();
